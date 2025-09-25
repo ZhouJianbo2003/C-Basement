@@ -1,0 +1,16 @@
+#include <iostream>
+#include <thread>
+
+//定义线程入口点函数
+void threadFunction() {
+	std::cout << "Hello from the thread!" << std::endl;
+}
+
+int main() {
+	//创建一个线程对象，传入线程入口点函数
+	std::thread myThread(threadFunction);
+	//使用join()等待线程完成
+	myThread.join();
+	std::cout << "The Main Function is Over!!!" << std::endl;
+	return 0;
+}

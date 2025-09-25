@@ -1,0 +1,70 @@
+#include <iostream>
+#include <thread>
+
+void foo(int& value) {
+	std::cout << "传入的值是：" << value << std::endl;
+}
+
+void foo1(int* ptr) {
+	std::cout << "传入的值是：" << *ptr << std::endl;
+	delete ptr; //释放内存
+}
+
+void foo2(std::shared_ptr<int> ptr) {
+	std::cout << "传入的值是：" << *ptr << std::endl;
+}
+
+class MyClass {
+public:
+	void func() {
+		std::cout << "Thread " << std::this_thread::get_id() << " started" << std::endl;
+		std::cout << "Thread " << std::this_thread::get_id() << " finished" << std::endl;
+	}
+
+private:
+	friend void friendFunction(MyClass* obj);
+	void func1() {
+		std::cout << "Thread " << std::this_thread::get_id() << " started" << std::endl;
+		std::cout << "Thread " << std::this_thread::get_id() << " finished" << std::endl;
+	}
+};
+
+void friendFunction(MyClass* obj) {
+	obj->func();
+}
+
+int main() {
+	
+	//传递临时变量的问题，使用 std::ref 传递一个持久化变量的引用
+	int value = 1;
+	std::thread myThread1(foo, std::ref(value));// 传递变量的引用
+	myThread1.join();
+
+	//传递指针或引用指向局部变量的问题，使用 new 在堆上分配内存
+	int* ptr = new int(22);
+	std::thread myThread2(foo1, ptr);
+	myThread2.join();
+
+	//传递指针或引用指向局部变量的问题，使用std::shared_ptr，避免手动管理内存
+	auto ptr1 = std::make_shared<int>(22);
+	std::thread myThread3(foo2, ptr1);
+	myThread3.join();
+
+	//传递指针或引用指向已释放的内存的问题
+	int value1 = 11;
+	std::thread myThread4(foo, std::ref(value1));// 传递变量的引用
+	myThread4.join();
+
+	//类成员函数作为入口函数，类对象被提前释放，使用 std::shared_ptr 管理生命周期
+	auto obj = std::make_shared<MyClass>();
+	std::thread mt(&MyClass::func, obj);
+	mt.join();
+
+	//入口函数为类的私有成员函数，使用友元函数来调用私有成员函数
+	MyClass obj1;
+	std::thread mt1(friendFunction, &obj1);
+	mt1.join();
+
+	std::cout << "The main function is over." << std::endl;
+	return 0;
+}

@@ -6,11 +6,46 @@ void threadFunction() {
 	std::cout << "Hello from the thread!" << std::endl;
 }
 
+void threadFunction1(std::string msg) {
+	std::cout << "msg = " << msg << std::endl;
+}
+
+void threadFunction2(int& value) {
+	std::cout << "value = " << value << std::endl;
+}
+
 int main() {
-	//创建一个线程对象，传入线程入口点函数
+	//使用无参传递函数作为线程入口点函数
 	std::thread myThread(threadFunction);
 	//使用join()等待线程完成
 	myThread.join();
+
+	//使用字符串参数传递函数作为线程入口点函数
+	std::string msg = "good good study, day day up.";
+	std::thread myThread1(threadFunction1, msg);
+	myThread1.join();
+
+	//使用引用参数传递函数作为线程入口点函数，当使用引用传递参数时，需要使用 std::ref 来包装引用，否则编译器会报错
+	int value = 22;
+	std::thread myThread2(threadFunction2, std::ref(value));
+	myThread2.join();
+
+	//使用detach()分离线程
+	std::string msg1 = "zhoujianbo";
+	std::thread myThread_1(threadFunction1, msg1);
+	myThread_1.detach();
+
+	//使用joinable()防止对一个不可加入的线程调用 join()或 detach()时抛出一个 std::system_error异常
+	std::string msg2 = "SCNU";
+	std::thread myThread_2(threadFunction1, msg2);
+	if (myThread_2.joinable()) {
+		myThread_2.join();
+	}
+
 	std::cout << "The Main Function is Over!!!" << std::endl;
 	return 0;
 }
+
+//忘记等待线程完成或分离线程：如果我们创建了一个线程，但没有等待它完成或分离它，那么在主线程结束时，可能会导致未定义行为。
+//访问共享数据时没有同步：如果我们在多个线程中访问共享数据，但没有使用同步机制，那么可能会导致数据竞争、死锁等问题。
+//异常传递问题：如果在线程中发生了异常，但没有处理它，那么可能会导致程序崩溃。因此，我们应该在线程中使用 try - catch 块来捕获异常，并在适当的地方处理它。

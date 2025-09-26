@@ -1,0 +1,30 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+int shared_value = 0;
+std::timed_mutex mtx;
+
+void function() {
+	for (int i = 0; i < 2; i++) {
+		std::unique_lock<std::timed_mutex> lg(mtx, std::defer_lock);//构造函数，使用给定的互斥量m进行初始化，但不对该互斥量进行加锁操作
+		if (lg.try_lock_for(std::chrono::seconds(2)))//尝试对互斥量进行加锁操作，如果当前互斥量已经被其他线程持有，则当前线程会被阻塞，直到互斥量被成功加锁，或者超过了指定的时间
+		{
+			std::this_thread::sleep_for(std::chrono::seconds(1));
+			shared_value++;
+		}
+	}
+}
+
+int main() {
+	
+	std::thread t1(function);
+	std::thread t2(function);
+
+	t1.join();
+	t2.join();
+
+	std::cout << "shared_value = " << shared_value << std::endl;
+	std::cout << "The main function is over." << std::endl;
+	return 0;
+}

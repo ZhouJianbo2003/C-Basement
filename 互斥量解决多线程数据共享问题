@@ -1,0 +1,29 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+int shared_value = 0;
+//使用互斥量避免数据竞争
+std::mutex mtx;
+
+void function() {
+	for (int i = 0; i < 10000; i++) {
+		mtx.lock();//上锁
+		shared_value++;//临界区
+		mtx.unlock();//解锁
+	}
+}
+
+int main() {
+	
+	std::thread t1(function);
+	std::thread t2(function);
+
+	t1.join();
+	t2.join();
+
+	std::cout << "shared_value = " << shared_value << std::endl;
+
+	std::cout << "The main function is over." << std::endl;
+	return 0;
+}

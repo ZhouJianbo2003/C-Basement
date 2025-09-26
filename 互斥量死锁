@@ -1,0 +1,40 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+//可以让两个线程按照相同的顺序获取互斥量的所有权可解决死锁问题但效率低
+std::mutex mtx1, mtx2;
+
+void function1() {
+	mtx1.lock();
+	std::cout << "Thread 1 locked mutex1" << std::endl;
+	mtx2.lock();
+	std::cout << "Thread 1 locked mutex2" << std::endl;
+	mtx1.unlock();
+	std::cout << "Thread 1 unlocked mutex1" << std::endl;
+	mtx2.unlock();
+	std::cout << "Thread 1 unlocked mutex2" << std::endl;
+}
+
+void function2() {
+	mtx1.lock();
+	std::cout << "Thread 2 locked mutex1" << std::endl;
+	mtx2.lock();
+	std::cout << "Thread 2 locked mutex2" << std::endl;
+	mtx1.unlock();
+	std::cout << "Thread 2 unlocked mutex1" << std::endl;
+	mtx2.unlock();
+	std::cout << "Thread 2 unlocked mutex2" << std::endl;
+}
+
+int main() {
+	
+	std::thread t1(function1);
+	std::thread t2(function2);
+
+	t1.join();
+	t2.join();
+
+	std::cout << "The main function is over." << std::endl;
+	return 0;
+}

@@ -1,0 +1,22 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <atomic>
+//std::atomic的使用方式类似于普通的 C++ 变量，但是它的操作是原子性的。
+//也就是说，在多线程环境下，多个线程同时对同一个std::atomic变量进行操作时，不会出现数据竞争问题
+std::atomic<int> count = 0;
+void increase() {
+	for (int i = 0; i < 10000; i++) {
+		count++;
+	}
+}
+
+int main() {
+	std::thread t1(increase);
+	std::thread t2(increase);
+	t1.join();
+	t2.join();
+	std::cout << count << std::endl;
+	return 0;
+}

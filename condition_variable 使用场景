@@ -1,0 +1,36 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <queue>
+std::condition_variable cv;//创建一个 std::condition_variable 对象
+std::mutex mx;//创建一个互斥锁 std::mutex对象，用于保护共享资源的访问
+std::queue<int> task;//模拟任务队列
+void producer() {
+	for (int i = 0; i < 10; i++) {
+		std::unique_lock<std::mutex> lock(mx);//使用std::unique_lock<std::mutex>对象锁定互斥锁
+		task.push(i);
+		std::cout << "Produced：" << i << std::endl;
+		cv.notify_one();//在其他线程中需要通知等待的线程时，调用std::condition_variable::notify_one()或std::condition_variable::notify_all()函数来通知等待的线程
+		std::this_thread::sleep_for(std::chrono::microseconds(100));
+	}
+}
+
+void consumer() {
+	while (true) {
+		std::unique_lock<std::mutex> lock(mx);//使用std::unique_lock<std::mutex>对象锁定互斥锁
+		cv.wait(lock, []() {//调用std::condition_variable::wait()、std::condition_variable::wait_for()或std:condition_variable::wait_until()函数等待条件变量
+			return !task.empty();
+			});
+		int value = task.front();
+		task.pop();
+		std::cout << "Consumed：" << value << std::endl;
+	}
+}
+
+int main() {
+	std::thread produce(producer);
+	std::thread consume(consumer);
+	produce.join();
+	consume.join();
+	return 0;
+}

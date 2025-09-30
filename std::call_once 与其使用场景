@@ -1,0 +1,37 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+
+class Singleton {
+private:
+	Singleton(){}
+	Singleton(const Singleton&) = delete;
+	Singleton& operator=(const Singleton) = delete;
+	static void init() {
+		instance.reset(new Singleton);
+	}
+	static std::unique_ptr<Singleton> instance;//使用了一个静态成员变量instance来存储单例实例,使用了std::unique_ptr来创建单例实例
+	static std::once_flag onceFlag;//使用了一个静态成员变量onceFlag来标记初始化是否已经完成
+	int data = 0;
+
+public:
+	int getData() {
+		return this->data;
+	}
+	void setData(int data) {
+		this->data = data;
+	}
+	static Singleton& getInstance() {
+		std::call_once(onceFlag, &Singleton::init);
+		return *instance;
+	}
+};
+
+int main() {
+	
+	std::thread t1(Singleton::getInstance);
+	std::thread t2(Singleton::getInstance);
+	t1.join();
+	t2.join();
+	return 0;
+}

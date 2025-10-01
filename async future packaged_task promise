@@ -1,0 +1,40 @@
+#include <iostream>
+#include <thread>
+#include <mutex>
+#include <queue>
+#include <condition_variable>
+#include <functional>
+#include <future>
+
+int caculate() {
+	std::this_thread::sleep_for(std::chrono::seconds(1));
+	return 23;
+}
+
+int operate(int x, int y) {
+	return x + y;
+}
+
+int main() {
+	//async 与 future
+	std::future<int> future_result = std::async(std::launch::async, caculate);//使用 std::async 函数异步执行了一个耗时的计算，这个计算在另一个线程中执行，不会阻塞主线程
+	int result = future_result.get();//通过 future_result.get() 获取异步操作的结果并输出
+	std::cout << "result = " << result << std::endl;
+	//packaged_task可以方便地将一个函数或可调用对象转换成一个异步操作，供其他线程使用
+	std::packaged_task<int(int, int)> task(operate);//std::packaged_task是一个类模板，用于将一个可调用对象（如函数、函数对象或 Lambda 表达式）封装成一个异步操作，并返回一个std::future对象，表示异步操作的结果
+	std::future<int> future_result1 = task.get_future();
+	std::thread thread(std::move(task), 2, 3);
+	thread.join();
+	int re = future_result1.get();
+	std::cout << "re = " << re << std::endl;
+	//promise
+	std::promise<int> p;//std::promise 是一个类模板，用于在一个线程中产生一个值，并在另一个线程中获取这个值
+	std::future<int> f = p.get_future();
+	std::thread t([&p] {
+		p.set_value(2025);
+		});
+	t.join();
+	int r = f.get();
+	std::cout << "r = " << r << std::endl;
+	return 0;
+}
